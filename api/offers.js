@@ -1,6 +1,9 @@
 // api/offers.js
 
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // ⬅️ dodajemy CORS
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+
   const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
   const baseUrl = "https://oferta.amer-pol.com/m/openapi/offers";
 
@@ -36,9 +39,10 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+
     res.status(response.status).json(data);
   } catch (error) {
     console.error("Proxy error:", error);
-    res.status(500).json({ error: "Błąd serwera proxy" });
+    res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
   }
 }
