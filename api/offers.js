@@ -1,49 +1,31 @@
-// api/offers.js
-
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    res.status(200).end(); // Preflight OK
+    return;
+  }
 
   const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
-  const baseUrl = "https://oferta.amer-pol.com/m/openapi/offers";
-
-  const {
-    offset = 0,
-    limit = 8,
-    brand,
-    model,
-    yearFrom,
-    yearTo,
-    priceMin,
-    priceMax
-  } = req.query;
-
-  const params = new URLSearchParams();
-  params.append("offset", offset);
-  params.append("limit", limit);
-  if (brand) params.append("brand", brand);
-  if (model) params.append("model", model);
-  if (yearFrom) params.append("yearFrom", yearFrom);
-  if (yearTo) params.append("yearTo", yearTo);
-  if (priceMin) params.append("priceFrom", priceMin);
-  if (priceMax) params.append("priceTo", priceMax);
-
-  const url = `${baseUrl}?${params.toString()}`;
+  const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(apiUrl, {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json"
-      }
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+      },
+      body: JSON.stringify(req.body)
     });
 
-    const text = await response.text(); // czytamy jako tekst, nie JSON
-    console.log(">>> Odpowiedź FOX API (raw):", text);
-
-    res.status(response.status).send(text); // przekazujemy ją dalej (nawet jeśli to błąd)
+    const data = await response.json();
+    res.status(response.status).json(data);
   } catch (error) {
-    console.error(">>> Błąd proxy:", error);
-    res.status(500).json({ error: "Błąd proxy", details: error.message });
+    console.error("Błąd proxy FOX:", error);
+    res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
   }
 }
