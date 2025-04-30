@@ -1,7 +1,7 @@
 // api/offers.js
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*"); // ⬅️ dodajemy CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
 
   const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
@@ -38,11 +38,12 @@ export default async function handler(req, res) {
       }
     });
 
-    const data = await response.json();
+    const text = await response.text(); // czytamy jako tekst, nie JSON
+    console.log(">>> Odpowiedź FOX API (raw):", text);
 
-    res.status(response.status).json(data);
+    res.status(response.status).send(text); // przekazujemy ją dalej (nawet jeśli to błąd)
   } catch (error) {
-    console.error("Proxy error:", error);
-    res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
+    console.error(">>> Błąd proxy:", error);
+    res.status(500).json({ error: "Błąd proxy", details: error.message });
   }
 }
