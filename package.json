@@ -1,0 +1,9 @@
+{
+    "name": "api-offers",
+    "version": "1.0.0",
+    "description": "Proxy dla 44fox API",
+    "main": "api/index.js",
+    "dependencies": {
+        "node-fetch": "^2.6.7"
+    }
+}
