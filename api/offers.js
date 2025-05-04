@@ -23,12 +23,11 @@ export default async function handler(req, res) {
       visible: 1,
       sold: 0,
       page,
-      limit: 1000 // pobieramy wszystkie uproszczone do filtrów
+      limit: 1000
     }
   };
 
   try {
-    // krok 1: pobierz wszystkie uproszczone ogłoszenia
     const listRes = await fetch(apiListUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0" },
@@ -37,11 +36,8 @@ export default async function handler(req, res) {
 
     const listData = await listRes.json();
     const all = Object.values(listData.offers || {});
-
-    // krok 2: wybierz N losowych ID do pobrania pełnych danych
     const selected = all.sort(() => 0.5 - Math.random()).slice(0, limit);
 
-    // krok 3: dla każdego id pobierz szczegóły przez /get
     const full = await Promise.all(
       selected.map(async (offer) => {
         const getPayload = {
@@ -61,7 +57,7 @@ export default async function handler(req, res) {
       })
     );
 
-    res.status(200).json({ full, all });
+    res.status(200).json({ full });
   } catch (error) {
     console.error("Błąd proxy FOX:", error);
     res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
