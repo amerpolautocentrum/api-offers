@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
-    res.status(200).end(); // preflight
+    res.status(200).end();
     return;
   }
 
@@ -12,6 +12,7 @@ export default async function handler(req, res) {
   const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
 
   const payload = {
+    version: "1.0",
     data: {
       visible: 1,
       sold: 0,
