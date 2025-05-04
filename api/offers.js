@@ -4,8 +4,15 @@ module.exports = async (req, res) => {
     const apiUrl = 'https://44fox.com/m/openapi';
     const apiKey = process.env.API_KEY;
 
+    console.log('Received request:', {
+        method: req.method,
+        body: req.body,
+        headers: req.headers
+    });
+
     // Obsługa żądania preflight CORS (OPTIONS)
     if (req.method === 'OPTIONS') {
+        console.log('Handling OPTIONS request');
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,6 +22,7 @@ module.exports = async (req, res) => {
 
     // Sprawdzenie metody POST
     if (req.method !== 'POST') {
+        console.log('Invalid method:', req.method);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(405).json({ error: 'Method Not Allowed', details: 'Only POST is supported' });
         return;
@@ -22,15 +30,17 @@ module.exports = async (req, res) => {
 
     // Sprawdzenie API_KEY
     if (!apiKey) {
+        console.log('API_KEY is missing');
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(500).json({ error: 'Server Configuration Error', details: 'API_KEY is not set' });
         return;
     }
 
     // Sprawdzenie body żądania
-    if (!req.body) {
+    if (!req.body || Object.keys(req.body).length === 0) {
+        console.log('Request body is missing or empty');
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.status(400).json({ error: 'Bad Request', details: 'Request body is missing' });
+        res.status(400).json({ error: 'Bad Request', details: 'Request body is missing or empty' });
         return;
     }
 
@@ -40,6 +50,7 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     try {
+        console.log('Sending request to external API:', apiUrl);
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -49,14 +60,21 @@ module.exports = async (req, res) => {
             body: JSON.stringify(req.body)
         });
 
+        console.log('Received response from external API:', {
+            status: response.status,
+            statusText: response.statusText
+        });
+
         if (!response.ok) {
-            throw new Error(`Błąd API: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            throw new Error(`Błąd API: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const data = await response.json();
+        console.log('Successfully fetched data:', data);
         res.status(200).json(data);
     } catch (error) {
-        console.error('Błąd:', error.message);
+        console.error('Error in API request:', error.message);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.status(500).json({ error: 'Błąd serwera', details: error.message });
     }
