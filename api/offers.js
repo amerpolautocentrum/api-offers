@@ -8,14 +8,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-
-  const { offset = 0, limit = 8 } = req.body;
-  const page = Math.floor(offset / limit) + 1;
-
   const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
   const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
 
@@ -23,8 +15,8 @@ export default async function handler(req, res) {
     data: {
       visible: 1,
       sold: 0,
-      page: page,
-      limit: limit
+      page: 1,
+      limit: 8
     }
   };
 
