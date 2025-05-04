@@ -1,32 +1,41 @@
 const fetch = require('node-fetch');
 
-       module.exports = async (req, res) => {
-           const apiUrl = 'https://44fox.com/m/openapi';
-           const apiKey = process.env.API_KEY; // Token z zmiennej środowiskowej
+module.exports = async (req, res) => {
+    const apiUrl = 'https://44fox.com/m/openapi';
+    const apiKey = process.env.API_KEY; // Token z zmiennej środowiskowej
 
-           // Dodaj nagłówki CORS
-           res.setHeader('Access-Control-Allow-Origin', '*');
-           res.setHeader('Access-Control-Allow-Methods', 'POST');
-           res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // Obsługa żądania preflight CORS (OPTIONS)
+    if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        res.status(204).send('');
+        return;
+    }
 
-           try {
-               const response = await fetch(apiUrl, {
-                   method: 'POST',
-                   headers: {
-                       'Content-Type': 'application/json',
-                       'Authentication': `Bearer ${apiKey}`
-                   },
-                   body: JSON.stringify(req.body)
-               });
+    // Dodaj nagłówki CORS dla żądań POST
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-               if (!response.ok) {
-                   throw new Error(`Błąd API: ${response.status} ${response.statusText}`);
-               }
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authentication': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(req.body)
+        });
 
-               const data = await response.json();
-               res.status(200).json(data);
-           } catch (error) {
-               console.error('Błąd:', error.message);
-               res.status(500).json({ error: 'Błąd serwera', details: error.message });
-           }
-       };
+        if (!response.ok) {
+            throw new Error(`Błąd API: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        res.status(200).json(data);
+    } catch (error) {
+        console.error('Błąd:', error.message);
+        res.status(500).json({ error: 'Błąd serwera', details: error.message });
+    }
+};
