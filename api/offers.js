@@ -9,10 +9,17 @@ export default async function handler(req, res) {
   }
 
   const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
+  const login = "m.konieczny@amer-pol.com"; // e-mail z konta FOX
   const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
 
   const payload = {
-    version: "1.0",
+    api: {
+      version: 1
+    },
+    account: {
+      login: login,
+      token: token
+    },
     data: {
       visible: 1,
       sold: 0,
@@ -25,7 +32,6 @@ export default async function handler(req, res) {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0"
       },
