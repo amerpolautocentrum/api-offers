@@ -9,8 +9,11 @@ export default async function handler(req, res) {
   }
 
   const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
-  const login = "m.konieczny@amer-pol.com"; // e-mail z konta FOX
+  const login = "m.konieczny@amer-pol.com";
   const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
+
+  const { offset = 0, limit = 8 } = req.body;
+  const page = Math.floor(offset / limit) + 1;
 
   const payload = {
     api: {
@@ -23,8 +26,9 @@ export default async function handler(req, res) {
     data: {
       visible: 1,
       sold: 0,
-      page: 1,
-      limit: 8
+      page: page,
+      limit: limit,
+      detaillevel: "full"
     }
   };
 
