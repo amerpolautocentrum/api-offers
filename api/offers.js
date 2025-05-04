@@ -13,53 +13,67 @@ export default async function handler(req, res) {
   const apiListUrl = "https://oferta.amer-pol.com/api/offers/list";
   const apiGetUrl = "https://oferta.amer-pol.com/api/offers/get";
 
-  const { offset = 0, limit = 8 } = req.body;
-  const page = Math.floor(offset / limit) + 1;
-
-  const listPayload = {
-    api: { version: 1 },
-    account: { login, token },
-    data: {
-      visible: 1,
-      sold: 0,
-      page,
-      limit: 1000
-    }
-  };
-
   try {
-    const listRes = await fetch(apiListUrl, {
+    const listResponse = await fetch(apiListUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0" },
-      body: JSON.stringify(listPayload)
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+      },
+      body: JSON.stringify({
+        api: { version: 1 },
+        account: { login, token },
+        data: {
+          visible: 1,
+          sold: 0,
+          page: 1,
+          limit: 1000
+        }
+      })
     });
 
-    const listData = await listRes.json();
-    const all = Object.values(listData.offers || {});
-    const selected = all.sort(() => 0.5 - Math.random()).slice(0, limit);
+    if (!listResponse.ok) {
+      throw new Error(`Błąd przy pobieraniu listy ofert: ${listResponse.status}`);
+    }
 
-    const full = await Promise.all(
+    const listData = await listResponse.json();
+    const allOffers = Object.values(listData.offers || {});
+    const selected = allOffers.sort(() => 0.5 - Math.random()).slice(0, 8);
+
+    const fullOffers = await Promise.all(
       selected.map(async (offer) => {
-        const getPayload = {
-          api: { version: 1 },
-          account: { login, token },
-          id: offer.id
-        };
+        try {
+          const detailResponse = await fetch(apiGetUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0"
+            },
+            body: JSON.stringify({
+              api: { version: 1 },
+              account: { login, token },
+              id: offer.id
+            })
+          });
 
-        const getRes = await fetch(apiGetUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0" },
-          body: JSON.stringify(getPayload)
-        });
+          if (!detailResponse.ok) {
+            console.warn("Nie udało się pobrać oferty:", offer.id);
+            return null;
+          }
 
-        const getData = await getRes.json();
-        return getData;
+          const detailData = await detailResponse.json();
+          return detailData;
+        } catch (err) {
+          console.error("Błąd pobierania szczegółów oferty:", err);
+          return null;
+        }
       })
     );
 
-    res.status(200).json({ full });
-  } catch (error) {
-    console.error("Błąd proxy FOX:", error);
-    res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
+    const filtered = fullOffers.filter(x => x !== null);
+    res.status(200).json({ full: filtered });
+  } catch (err) {
+    console.error("Błąd główny w handlerze:", err);
+    res.status(500).json({ error: "Błąd serwera proxy", details: err.message });
   }
 }
