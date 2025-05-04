@@ -10,40 +10,58 @@ export default async function handler(req, res) {
 
   const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
   const login = "m.konieczny@amer-pol.com";
-  const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
+  const apiListUrl = "https://oferta.amer-pol.com/api/offers/list";
+  const apiGetUrl = "https://oferta.amer-pol.com/api/offers/get";
 
   const { offset = 0, limit = 8 } = req.body;
   const page = Math.floor(offset / limit) + 1;
 
-  const payload = {
-    api: {
-      version: 1
-    },
-    account: {
-      login: login,
-      token: token
-    },
+  const listPayload = {
+    api: { version: 1 },
+    account: { login, token },
     data: {
       visible: 1,
       sold: 0,
-      page: page,
-      limit: limit,
-      detaillevel: 1 // zmiana tu
+      page,
+      limit: 1000 // pobieramy wszystkie uproszczone do filtrów
     }
   };
 
   try {
-    const response = await fetch(apiUrl, {
+    // krok 1: pobierz wszystkie uproszczone ogłoszenia
+    const listRes = await fetch(apiListUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
-      },
-      body: JSON.stringify(payload)
+      headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0" },
+      body: JSON.stringify(listPayload)
     });
 
-    const data = await response.json();
-    res.status(response.status).json(data);
+    const listData = await listRes.json();
+    const all = Object.values(listData.offers || {});
+
+    // krok 2: wybierz N losowych ID do pobrania pełnych danych
+    const selected = all.sort(() => 0.5 - Math.random()).slice(0, limit);
+
+    // krok 3: dla każdego id pobierz szczegóły przez /get
+    const full = await Promise.all(
+      selected.map(async (offer) => {
+        const getPayload = {
+          api: { version: 1 },
+          account: { login, token },
+          id: offer.id
+        };
+
+        const getRes = await fetch(apiGetUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "User-Agent": "Mozilla/5.0" },
+          body: JSON.stringify(getPayload)
+        });
+
+        const getData = await getRes.json();
+        return getData;
+      })
+    );
+
+    res.status(200).json({ full, all });
   } catch (error) {
     console.error("Błąd proxy FOX:", error);
     res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
