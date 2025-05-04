@@ -19,6 +19,9 @@ export default async function handler(req, res) {
     data: {
       visible: 1,
       sold: 0,
+      detaillevel: "simple",
+      source: "my",
+      page: 1,
       limit: 50
     }
   };
@@ -34,10 +37,12 @@ export default async function handler(req, res) {
     });
 
     const json = await response.json();
+    console.log("=== Odpowiedź z FOX ===", JSON.stringify(json, null, 2));
+
     const offers = Object.values(json.offers || {});
     res.status(200).json({ full: offers });
   } catch (err) {
-    console.error("Błąd proxy:", err);
+    console.error("Błąd proxy FOX:", err);
     res.status(500).json({ error: "Błąd proxy FOX", details: err.message });
   }
 }
