@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       sold: 0,
       page: page,
       limit: limit,
-      detaillevel: "full"
+      detaillevel: 1 // zmiana tu
     }
   };
 
