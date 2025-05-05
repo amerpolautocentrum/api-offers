@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       sold: 0,
       source: "my",
       page: 1,
-      limit: 100
+      limit: 50
     }
   };
 
@@ -43,23 +43,10 @@ export default async function handler(req, res) {
       body: JSON.stringify(payload)
     });
 
-    const apiData = await response.json();
-    const offers = Object.values(apiData?.offers || {});
-    const processedOffers = offers.map(offer => ({
-      id: offer.id,
-      data: {
-        id_make: offer.id_make || null,
-        id_model: offer.id_model || null,
-        yearproduction: offer.yearproduction || null,
-        mileage: offer.mileage || null,
-        power: offer.power || null,
-        price: offer.price || null,
-        mainimage: offer.mainimage || null,
-        id_kategoria: offer.id_kategoria || null
-      }
-    }));
+    const raw = await response.json();
+    const full = Object.values(raw.offers || {});
 
-    res.status(200).json({ full: processedOffers });
+    res.status(200).json({ full });
   } catch (error) {
     console.error("Błąd proxy FOX:", error);
     res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
