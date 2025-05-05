@@ -44,7 +44,9 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    res.status(response.status).json(data);
+
+    // Dla kompatybilności z frontendem zwracamy jako 'full'
+    res.status(response.status).json({ full: Object.values(data.offers || {}) });
   } catch (error) {
     console.error("Błąd proxy FOX:", error);
     res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
