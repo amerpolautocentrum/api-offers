@@ -1,4 +1,4 @@
-// Serwer proxy do API 44FOX z pełnym poziomem szczegółowości + dane do filtrów
+// Serwer proxy do API 44FOX z pełnym poziomem szczegółowości
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       sold: 0,
       source: "my",
       page: 1,
-      limit: 50
+      limit: 100
     }
   };
 
@@ -43,30 +43,23 @@ export default async function handler(req, res) {
       body: JSON.stringify(payload)
     });
 
-    const foxData = await response.json();
+    const apiData = await response.json();
+    const offers = Object.values(apiData?.offers || {});
+    const processedOffers = offers.map(offer => ({
+      id: offer.id,
+      data: {
+        id_make: offer.id_make || null,
+        id_model: offer.id_model || null,
+        yearproduction: offer.yearproduction || null,
+        mileage: offer.mileage || null,
+        power: offer.power || null,
+        price: offer.price || null,
+        mainimage: offer.mainimage || null,
+        id_kategoria: offer.id_kategoria || null
+      }
+    }));
 
-    if (!foxData.offers || Object.keys(foxData.offers).length === 0) {
-      return res.status(200).json({ full: [] });
-    }
-
-    const offers = Object.values(foxData.offers).slice(0, 6);
-    const enriched = offers.map(o => {
-      const data = o.data || {};
-      return {
-        id: o.id,
-        data: {
-          id_make: data.id_make || null,
-          id_model: data.id_model || null,
-          yearproduction: data.yearproduction || null,
-          price: data.price || null,
-          mileage: data.mileage || null,
-          power: data.power || null,
-          mainimage: data.mainimage || null
-        }
-      };
-    });
-
-    res.status(200).json({ full: enriched });
+    res.status(200).json({ full: processedOffers });
   } catch (error) {
     console.error("Błąd proxy FOX:", error);
     res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
