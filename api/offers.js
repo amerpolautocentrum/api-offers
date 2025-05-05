@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       detaillevel: "simple",
       source: "my",
       page: 1,
-      limit: 50
+      limit: 100
     }
   };
 
@@ -36,8 +36,13 @@ export default async function handler(req, res) {
       body: JSON.stringify(payload)
     });
 
-    const json = await response.json();
-    res.status(200).json(json); // <<< ZWRACA CAŁĄ ODPOWIEDŹ FOX
+    const result = await response.json();
+    const offers = Object.values(result.offers || {});
+
+    const sorted = offers.sort((a, b) => b.time_modification - a.time_modification);
+    const selected = sorted.slice(0, 8);
+
+    res.status(200).json({ full: selected });
   } catch (err) {
     res.status(500).json({ error: "Błąd proxy FOX", details: err.message });
   }
