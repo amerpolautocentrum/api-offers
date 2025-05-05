@@ -14,6 +14,8 @@ export default async function handler(req, res) {
   const login = "m.konieczny@amer-pol.com";
   const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
 
+  const { filters = {} } = req.body;
+
   const payload = {
     api: {
       version: 1
@@ -28,7 +30,8 @@ export default async function handler(req, res) {
       sold: 0,
       source: "my",
       page: 1,
-      limit: 50
+      limit: 200,
+      ...filters // dynamiczne filtry z frontend
     }
   };
 
@@ -44,9 +47,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-
-    // Dla kompatybilności z frontendem zwracamy jako 'full'
-    res.status(response.status).json({ full: Object.values(data.offers || {}) });
+    res.status(response.status).json(data);
   } catch (error) {
     console.error("Błąd proxy FOX:", error);
     res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
