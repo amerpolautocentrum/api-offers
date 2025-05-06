@@ -1,54 +1,37 @@
-// Serwer proxy do API 44FOX z pełnym poziomem szczegółowości
-
 export default async function handler(req, res) {
+  // Konfiguracja CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
 
-  const token = "021990a9e67cfd35389f867fc0cf5ee4322ca152407e35264fb01186d578cd8b";
-  const login = "m.konieczny@amer-pol.com";
-  const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
-
-  const payload = {
-    api: {
-      version: 1
-    },
-    account: {
-      login: login,
-      token: token
-    },
-    data: {
-      detaillevel: "full",
-      visible: 1,
-      sold: 0,
-      source: "my",
-      page: 1,
-      limit: 50
-    }
-  };
+  // Bezpieczne pobieranie danych z env variables
+  const token = process.env.FOX44_TOKEN;
+  const login = process.env.FOX44_LOGIN;
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await fetch("https://api.44fox.com/offers", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
+        "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        account: { login, token },
+        data: {
+          detaillevel: "basic",
+          visible: 1,
+          limit: 500 // Większy limit dla pełnej listy filtrów
+        }
+      })
     });
 
-    const raw = await response.json();
-    const full = Object.values(raw.offers || {});
-
-    res.status(200).json({ full });
+    const data = await response.json();
+    res.status(200).json(data.offers || []);
+    
   } catch (error) {
-    console.error("Błąd proxy FOX:", error);
-    res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
+    console.error("API Error:", error);
+    res.status(500).json({ error: "Failed to fetch offers" });
   }
 }
