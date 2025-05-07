@@ -4,16 +4,20 @@
     {
       "src": "api/offers.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/brands.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/offers",
       "dest": "api/offers.js"
+    },
+    {
+      "src": "/api/brands",
+      "dest": "api/brands.js"
     }
   ]
-}
-{
-  "src": "/api/brands",
-  "dest": "api/brands.js"
 }
