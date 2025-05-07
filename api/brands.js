@@ -47,11 +47,9 @@ export default async function handler(req, res) {
 
   try {
     const allBrands = new Set();
-    const maxPages = 1;
+    const maxPages = 3;
     for (let page = 1; page <= maxPages; page++) {
       const result = await fetchPage(page);
-
-      console.log("Pełna odpowiedź z FOX:", JSON.stringify(result, null, 2));
 
       if (!result || !result.offers) {
         console.warn("Brak danych z FOX na stronie", page);
@@ -66,7 +64,7 @@ export default async function handler(req, res) {
         if (i === 0) {
           console.log("Przykładowa oferta:", JSON.stringify(offer, null, 2));
         }
-        const make = offer?.data?.id_make;
+        const make = offer?.id_make;
         console.log("Znaleziono markę:", make);
         if (typeof make === "string") {
           allBrands.add(make.toLowerCase());
