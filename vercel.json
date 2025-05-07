@@ -13,3 +13,7 @@
     }
   ]
 }
+{
+  "src": "/api/brands",
+  "dest": "api/brands.js"
+}
