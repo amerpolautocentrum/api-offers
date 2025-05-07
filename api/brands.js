@@ -47,9 +47,11 @@ export default async function handler(req, res) {
 
   try {
     const allBrands = new Set();
-    const maxPages = 3;
+    const maxPages = 1;
     for (let page = 1; page <= maxPages; page++) {
       const result = await fetchPage(page);
+
+      console.log("Pełna odpowiedź z FOX:", JSON.stringify(result, null, 2));
 
       if (!result || !result.offers) {
         console.warn("Brak danych z FOX na stronie", page);
@@ -58,8 +60,6 @@ export default async function handler(req, res) {
 
       const offers = Object.values(result.offers || []);
       console.log(`Strona ${page}: znaleziono ${offers.length} ofert`);
-
-      if (offers.length === 0) break;
 
       for (let i = 0; i < offers.length; i++) {
         const offer = offers[i];
