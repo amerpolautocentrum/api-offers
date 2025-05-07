@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
   try {
     const allBrands = new Set();
-    const maxPages = 10;
+    const maxPages = 3;
     for (let page = 1; page <= maxPages; page++) {
       const result = await fetchPage(page);
 
@@ -61,8 +61,13 @@ export default async function handler(req, res) {
 
       if (offers.length === 0) break;
 
-      for (const offer of offers) {
+      for (let i = 0; i < offers.length; i++) {
+        const offer = offers[i];
+        if (i === 0) {
+          console.log("Przykładowa oferta:", JSON.stringify(offer, null, 2));
+        }
         const make = offer?.data?.id_make;
+        console.log("Znaleziono markę:", make);
         if (typeof make === "string") {
           allBrands.add(make.toLowerCase());
         }
