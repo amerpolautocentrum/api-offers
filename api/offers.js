@@ -1,22 +1,52 @@
-// api/offers.js
+// Serwer proxy do API 44FOX z pełnym poziomem szczegółowości
 
-module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*"); // Pozwól na dostęp z każdej domeny
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  // Obsługa zapytania OPTIONS
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
+  const token = "487f9d3f22584fe60927315cc5955f2cd94ba4e3cecb61abd61740ef288e1006";
+  const login = "m.konieczny@amer-pol.com";
+  const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
+
+  const payload = {
+    api: {
+      version: 1
+    },
+    account: {
+      login: login,
+      token: token
+    },
+    data: {
+      detaillevel: "full",
+      visible: 1,
+      sold: 0,
+      source: "my",
+      page: 1,
+      limit: 50
+    }
+  };
+
   try {
-    // Używamy poprawnego endpointu do pobrania parametrów
-    const response = await fetch("https://sandbox.44fox.com/api/offers/parameters");
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+      },
+      body: JSON.stringify(payload)
+    });
+
     const data = await response.json();
-    res.status(200).json(data);
+    res.status(response.status).json(data);
   } catch (error) {
-    console.error("Błąd podczas pobierania parametrów ofert:", error);
-    res.status(500).json({ message: "Błąd podczas pobierania danych" });
+    console.error("Błąd proxy FOX:", error);
+    res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
   }
-};
+}
