@@ -1,52 +1,47 @@
-// Serwer proxy do API 44FOX z pełnym poziomem szczegółowości
+// api/offers.js
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const token = "487f9d3f22584fe60927315cc5955f2cd94ba4e3cecb61abd61740ef288e1006";
-  const login = "m.konieczny@amer-pol.com";
-  const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
+  const { filters = {}, page = 1 } = req.body;
 
-  const payload = {
+  const foxApiUrl = "https://oferta.amer-pol.com/api/offers/list";
+
+  const body = {
     api: {
       version: 1
     },
     account: {
-      login: login,
-      token: token
+      login: process.env.FOX_LOGIN, // ustaw te zmienne w Vercel jako sekretne
+      token: process.env.FOX_TOKEN
     },
     data: {
-      detaillevel: "full",
+      ...filters,
+      page,
+      limit: 50,
       visible: 1,
       sold: 0,
       source: "my",
-      page: 1,
-      limit: 50
+      detaillevel: "all"
     }
   };
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await fetch(foxApiUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0 (compatible; amerpolautocentrum/1.0)"
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(body)
     });
 
     const data = await response.json();
-    res.status(response.status).json(data);
+    res.status(200).json(data);
   } catch (error) {
-    console.error("Błąd proxy FOX:", error);
-    res.status(500).json({ error: "Błąd serwera proxy", details: error.message });
+    console.error("Błąd komunikacji z FOX API:", error);
+    res.status(500).json({ error: "Błąd połączenia z FOX API" });
   }
 }
