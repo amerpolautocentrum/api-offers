@@ -23,10 +23,10 @@ export default async function handler(req, res) {
       token: token
     },
     data: {
-      detaillevel: "full",
+      detaillevel: "all",     // 👈 pełne dane ogłoszeń
       visible: 1,
       sold: 0,
-      source: "my",
+      source: "all",          // 👈 teraz pobiera WSZYSTKIE oferty, nie tylko własne
       page: 1,
       limit: 50
     }
