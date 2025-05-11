@@ -2,22 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/offers.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/brands.js",
+      "src": "api/*.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/offers",
-      "dest": "api/offers.js"
-    },
-    {
-      "src": "/api/brands",
-      "dest": "api/brands.js"
+      "src": "/api/(.*)",
+      "dest": "/api/$1.js"
     }
   ]
 }
