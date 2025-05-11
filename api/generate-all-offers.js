@@ -1,9 +1,6 @@
 
 // /api/generate-all-offers.js
 
-import fs from 'fs';
-import path from 'path';
-
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -52,7 +49,8 @@ export default async function handler(req, res) {
 
   try {
     const allOffers = [];
-    const maxPages = 100; // nawet do 5000 ogłoszeń
+    const maxPages = 50;
+
     for (let page = 1; page <= maxPages; page++) {
       const result = await fetchPage(page);
       const offers = Object.values(result?.offers || []);
@@ -60,10 +58,7 @@ export default async function handler(req, res) {
       allOffers.push(...offers);
     }
 
-    const filePath = path.join(process.cwd(), "public", "all-offers.json");
-    fs.writeFileSync(filePath, JSON.stringify(allOffers, null, 2), "utf-8");
-
-    res.status(200).json({ message: `Zapisano ${allOffers.length} ofert do all-offers.json` });
+    res.status(200).json(allOffers);
   } catch (error) {
     console.error("❌ Błąd końcowy:", error);
     res.status(500).json({ error: "Błąd serwera", details: error.message });
