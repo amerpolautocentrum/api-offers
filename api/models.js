@@ -1,3 +1,4 @@
+
 // /api/models.js
 
 export default async function handler(req, res) {
@@ -13,12 +14,6 @@ export default async function handler(req, res) {
   const token = "487f9d3f22584fe60927315cc5955f2cd94ba4e3cecb61abd61740ef288e1006";
   const login = "m.konieczny@amer-pol.com";
   const apiUrl = "https://oferta.amer-pol.com/api/offers/list";
-
-  const { brand } = req.query;
-  if (!brand) {
-    res.status(400).json({ error: "Brakuje parametru 'brand' w zapytaniu" });
-    return;
-  }
 
   const fetchPage = async (page = 1) => {
     const payload = {
@@ -47,33 +42,41 @@ export default async function handler(req, res) {
     try {
       return await response.json();
     } catch (e) {
-      console.error("Błąd parsowania odpowiedzi z FOX API:", e);
+      console.error("❌ Błąd parsowania odpowiedzi JSON:", e);
       return {};
     }
   };
 
   try {
-    const allModels = new Set();
-    const maxPages = 5;
+    const maxPages = 30; // Zwiększamy do 1500 ofert (30×50)
+    const modelMap = {};
 
     for (let page = 1; page <= maxPages; page++) {
       const result = await fetchPage(page);
-      const offers = Object.values(result?.offers || {});
+      const offers = Object.values(result?.offers || []);
+
+      if (!offers.length) break;
 
       for (const offer of offers) {
-        if ((offer.id_make || '').toLowerCase() === brand.toLowerCase()) {
-          const model = offer?.id_model || offer?.model || offer?.title || offer?.description;
-          if (typeof model === "string") {
-            allModels.add(model.toLowerCase());
-          }
+        const brand = (offer.id_make || "").toLowerCase();
+        const model = (offer.id_model || offer.model || offer.title || "").toLowerCase();
+
+        if (brand && model) {
+          if (!modelMap[brand]) modelMap[brand] = new Set();
+          modelMap[brand].add(model);
         }
       }
     }
 
-    const modelList = Array.from(allModels).sort();
-    res.status(200).json(modelList);
+    // Konwertujemy Sety na tablice i sortujemy
+    const finalMap = {};
+    for (const brand in modelMap) {
+      finalMap[brand] = Array.from(modelMap[brand]).sort();
+    }
+
+    res.status(200).json(finalMap);
   } catch (error) {
-    console.error("Błąd końcowy w /api/models:", error);
+    console.error("❌ Błąd końcowy w /api/models:", error);
     res.status(500).json({ error: "Błąd serwera", details: error.message });
   }
 }
