@@ -1,5 +1,7 @@
-
 // /api/generate-all-offers.js
+
+import fs from "fs/promises";
+import path from "path";
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -42,23 +44,29 @@ export default async function handler(req, res) {
     try {
       return await response.json();
     } catch (e) {
-      console.error("❌ Błąd parsowania odpowiedzi JSON:", e);
+      console.error("❌ Błąd parsowania JSON:", e);
       return {};
     }
   };
 
   try {
     const allOffers = [];
-    const maxPages = 50;
+    let page = 1;
 
-    for (let page = 1; page <= maxPages; page++) {
+    while (true) {
       const result = await fetchPage(page);
       const offers = Object.values(result?.offers || []);
       if (!offers.length) break;
+
       allOffers.push(...offers);
+      page++;
     }
 
-    res.status(200).json(allOffers);
+    // 🔧 Zapis do pliku public/all-offers.json
+    const filePath = path.join(process.cwd(), "public", "all-offers.json");
+    await fs.writeFile(filePath, JSON.stringify(allOffers, null, 2), "utf8");
+
+    res.status(200).json({ status: "ok", ilosc: allOffers.length });
   } catch (error) {
     console.error("❌ Błąd końcowy:", error);
     res.status(500).json({ error: "Błąd serwera", details: error.message });
